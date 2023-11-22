@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 import 'package:inventory_pbp/screens/shoplist_form.dart';
-import 'package:inventory_pbp/screens/chocolist_page.dart';
+import 'package:inventory_pbp/screens/list_product.dart';
+import 'package:inventory_pbp/screens/login.dart';
 
 class ShopItem {
   final String name;
   final IconData icon;
   final Color color;
-
-
   ShopItem(this.name, this.icon, this.color);
 }
 
@@ -18,11 +19,12 @@ class ShopCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
     return Material(
       color: item.color,
       child: InkWell(
         // Area responsive terhadap sentuhan
-        onTap: () {
+        onTap: () async {
           // Memunculkan SnackBar ketika diklik
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
@@ -35,12 +37,32 @@ class ShopCard extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => const ShopFormPage(),
                   ));
-          }
-          if (item.name == "Lihat Item") {
+          } else if (item.name == "Daftar Produk") {
             Navigator.push(context,
-              MaterialPageRoute(builder: (context) => ChocoListPage(chocoList: chocoList)));
-          }
-        },
+                MaterialPageRoute(builder: (context) => const ProductPage()));
+          
+          }else if (item.name == "Logout") {
+                  final response = await request.logout(
+                      // TODO: Ganti URL dan jangan lupa tambahkan trailing slash (/) di akhir URL!
+                      "http://127.0.0.1:8000/auth/logout/");
+                  String message = response["message"];
+                  if (response['status']) {
+                    String uname = response["username"];
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text("$message Sampai jumpa, $uname."),
+                    ));
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text("$message"),
+                    ));
+                  }
+                }
+          },
+
         child: Container(
           // Container untuk menyimpan Icon dan Text
           padding: const EdgeInsets.all(8),
